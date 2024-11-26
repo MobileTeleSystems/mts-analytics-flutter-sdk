@@ -1,0 +1,25 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        maven {url 'https://developer.huawei.com/repo/'}
+        maven {
+            name "mts_analytics_sdk_external"
+            url "https://packages.a.mts.ru/repository/maven-releases/"
+        }
+    }
+}
+
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+        maven {url 'https://developer.huawei.com/repo/'}
+        maven {
+            name "mts_analytics_sdk_external"
+            url "https://packages.a.mts.ru/repository/maven-releases/"
+        }
+    }
+}
+
+rootProject.name = 'mts_analytics_plugin'

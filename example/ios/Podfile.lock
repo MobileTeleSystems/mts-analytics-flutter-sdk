@@ -1,0 +1,44 @@
+PODS:
+  - Flutter (1.0.0)
+  - integration_test (0.0.1):
+    - Flutter
+  - MTMetrics (3.1.0):
+    - PLCrashReporter (~> 1.11.0)
+    - SwiftProtobuf
+  - mts_analytics_plugin (1.7.0):
+    - Flutter
+    - MTMetrics (= 3.1.0)
+  - PLCrashReporter (1.11.2)
+  - SwiftProtobuf (1.28.2)
+
+DEPENDENCIES:
+  - Flutter (from `Flutter`)
+  - integration_test (from `.symlinks/plugins/integration_test/ios`)
+  - mts_analytics_plugin (from `.symlinks/plugins/mts_analytics_plugin/ios`)
+
+SPEC REPOS:
+  https://github.com/CocoaPods/Specs.git:
+    - PLCrashReporter
+    - SwiftProtobuf
+  https://github.com/MobileTeleSystems/mts-analytics-podspecs:
+    - MTMetrics
+
+EXTERNAL SOURCES:
+  Flutter:
+    :path: Flutter
+  integration_test:
+    :path: ".symlinks/plugins/integration_test/ios"
+  mts_analytics_plugin:
+    :path: ".symlinks/plugins/mts_analytics_plugin/ios"
+
+SPEC CHECKSUMS:
+  Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
+  integration_test: 252f60fa39af5e17c3aa9899d35d908a0721b573
+  MTMetrics: 53de1ded8487a3f32b13144f35f2e7af61dd0d90
+  mts_analytics_plugin: 8a7566e69db484a57900dcbac1f971cef368325d
+  PLCrashReporter: 499c53b0104f95c302d94fd723ebb03c56d9bac8
+  SwiftProtobuf: 4dbaffec76a39a8dc5da23b40af1a5dc01a4c02d
+
+PODFILE CHECKSUM: 7c86abf2acead0a03e4209cef907c28b761f2390
+
+COCOAPODS: 1.15.2

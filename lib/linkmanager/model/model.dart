@@ -1,0 +1,1 @@
+export 'deeplink_result.dart';

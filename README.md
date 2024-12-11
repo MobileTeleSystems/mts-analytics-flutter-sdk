@@ -10,7 +10,7 @@
   mts_analytics_plugin:
     git:
       url: git@github.com:MobileTeleSystems/mts-analytics-flutter-sdk.git
-      ref: 1.7.0
+      ref: 1.8.0
 ```
 
 Пример подключения: <https://github.com/MobileTeleSystems/mts-analytics-flutter-sdk/tree/master/example>
@@ -54,7 +54,7 @@ tvOS 13.0+
 source 'https://github.com/CocoaPods/Specs.git'
 source 'https://github.com/MobileTeleSystems/mts-analytics-podspecs'
 
-pod 'MTMetrics', '~> 3.1.0'
+pod 'MTMetrics', '~> 3.2.0'
 ```
 
 ## Использование

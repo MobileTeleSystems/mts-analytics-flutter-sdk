@@ -2,29 +2,40 @@ package ru.mts.analytics.plugin
 
 import android.content.Context
 import android.net.Uri
-import ru.mts.analytics.plugin.linkmanager.toMap
-
+import android.util.Log
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import ru.mts.analytics.plugin.linkmanager.toMap
+import ru.mts.analytics.plugin.remoteconfig.RemoteConfigMapper
 import ru.mts.analytics.sdk.publicapi.MTSAnalytics
-import ru.mts.analytics.sdk.publicapi.config.MtsAnalyticsConfig2
 import ru.mts.analytics.sdk.publicapi.api.MtsAnalyticsApi
-import ru.mts.analytics.sdk.publicapi.api.apicontract.DeepLinkResult
+import ru.mts.analytics.sdk.publicapi.config.MtsAnalyticsConfig2
 
 /** MtsAnalyticsPlugin */
 class MtsAnalyticsPlugin : FlutterPlugin, MethodCallHandler {
     private lateinit var channel: MethodChannel
     private var context: Context? = null
     private lateinit var mtsAnalytics: MtsAnalyticsApi
-    private val coroutineScope = CoroutineScope(Dispatchers.IO)
+    private val coroutineScope =
+        CoroutineScope(
+            context = Dispatchers.IO + CoroutineExceptionHandler { _, _ ->
+                Log.e("AnalyticsPlugin", "Illegal state")
+            }
+        )
+
+    private val remoteConfigMapper by lazy {
+        RemoteConfigMapper(
+            mtsAnalytics = mtsAnalytics,
+            coroutineScope = coroutineScope,
+        )
+    }
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         context = flutterPluginBinding.applicationContext
@@ -43,13 +54,27 @@ class MtsAnalyticsPlugin : FlutterPlugin, MethodCallHandler {
             "setLocation" -> handleSetLocation(call, result)
             "trackUri" -> handleTrackUri(call, result)
             "resolveLink" -> resolveLink(call, result)
+            "rc.init" -> remoteConfigMapper
+            "rc.getDefaultConfigValue" -> remoteConfigMapper.getDefaultConfigValue(call, result)
+            "rc.getConfigValue" -> remoteConfigMapper.getActiveConfig(call, result)
+            "rc.setDefaultsMap" -> remoteConfigMapper.setDefaultsMap(call, result)
+            "rc.fetchRemoteConfigValues" -> {
+                remoteConfigMapper.fetchRemoteConfigValues(result)
+            }
+
+            "rc.fetchRemoteConfigValuesAndActivate" -> {
+                remoteConfigMapper.fetchRemoteConfigValuesAndActivate(result)
+            }
+
+            "rc.activate" -> remoteConfigMapper.activate(result)
+            "rc.minFetchInterval" -> remoteConfigMapper.minFetchInterval(call, result)
             else -> {
                 result.notImplemented()
             }
         }
     }
 
-    private fun handleGetInstance(call: MethodCall, result: MethodChannel.Result) {
+    private fun handleGetInstance(call: MethodCall, result: Result) {
         context?.let {
             val parameters = call.argument("parameters") as? Map<String, Any?>
             val mtsAnalyticsConfig =
@@ -63,9 +88,9 @@ class MtsAnalyticsPlugin : FlutterPlugin, MethodCallHandler {
         result.success(null)
     }
 
-    private fun handleSendAuthenticationEvent(call: MethodCall, result: MethodChannel.Result) {
+    private fun handleSendAuthenticationEvent(call: MethodCall, result: Result) {
         val ssoState = call.argument<String>("ssoState") as String
-        val redirectUrl = call.argument<String?>("redirectUrl") as String?
+        val redirectUrl = call.argument<String?>("redirectUrl")
         mtsAnalytics.sendAuthenticationEvent(
             ssoState = ssoState,
             redirectUrl = redirectUrl
@@ -101,8 +126,8 @@ class MtsAnalyticsPlugin : FlutterPlugin, MethodCallHandler {
     }
 
     private fun handleSetLocation(call: MethodCall, result: Result) {
-        val latitude = call.argument<Double?>("latitude") as Double?
-        val longitude = call.argument<Double?>("longitude") as Double
+        val latitude = call.argument<Double?>("latitude")
+        val longitude = call.argument<Double?>("longitude")
         mtsAnalytics.setLocation(
             latitude = latitude,
             longitude = longitude
@@ -112,7 +137,7 @@ class MtsAnalyticsPlugin : FlutterPlugin, MethodCallHandler {
 
     private fun handleTrackUri(call: MethodCall, result: Result) {
         val uriString = call.argument<String>("uri") as String
-        val map = call.argument<Map<String, Any?>?>("map") as Map<String, Any?>?
+        val map = call.argument<Map<String, Any?>?>("map")
         mtsAnalytics.track(
             uri = Uri.parse(uriString),
             map = map
@@ -124,7 +149,7 @@ class MtsAnalyticsPlugin : FlutterPlugin, MethodCallHandler {
         coroutineScope.launch {
             runCatching {
                 val deepLinkResult =
-                    mtsAnalytics.resolveLink(Uri.parse(call.argument<String>("uri")))
+                    mtsAnalytics.resolveLink(Uri.parse(call.argument("uri")))
                 result.success(deepLinkResult.toMap())
             }.onFailure { error ->
                 val map = mapOf(

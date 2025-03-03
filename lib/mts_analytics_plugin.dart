@@ -1,12 +1,14 @@
 import 'dart:async';
-
 import 'package:flutter/services.dart';
+import 'package:mts_analytics_plugin/extensions/extensions.dart';
 import 'package:mts_analytics_plugin/linkmanager/linkmanager.dart';
+import 'remote_config/remote_config.dart';
 import 'package:mts_analytics_plugin/models/mts_analytics_config.dart';
 import 'models/event/event.dart';
 
 class MtsAnalyticsPlugin {
   late String pluginVersion;
+  final RemoteConfig remoteConfig = RemoteConfig(_methodChannel);
 
   Future<String> getPluginVersion() async {
     final fileContent = await rootBundle.loadString(

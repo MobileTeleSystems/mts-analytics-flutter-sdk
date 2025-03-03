@@ -11,7 +11,7 @@ extension ECommerceUAEventExtension on ECommerceUAEvent {
     data['eventType'] = 'ecommerce_ua';
     eventData['ecommerce'] = ecommerce.toJson();
     eventData['currencyCode'] = currencyCode;
-    eventData['ecommerceParameters'] = ecommerceParameters;
+    eventData['ecommerceData'] = ecommerceParameters;
     final customProperties = customDimensions;
     if (customProperties != null) {
       customData.addAll(customProperties);

@@ -6,7 +6,8 @@ import CoreLocation
 public class MtsAnalyticsPlugin: NSObject, FlutterPlugin {
     
     private let flutterErrorCode = "MTSACallsHandlerError"
-    private var mtsAnalytics: MTAnalyticsProvider?
+    private var mtsAnalytics: MTAnalytics?
+    private var remoteConfig: MTRemoteConfig?
     private var logLevel: MTLogLevel?
 
     public static func register(with registrar: FlutterPluginRegistrar) {
@@ -19,6 +20,8 @@ public class MtsAnalyticsPlugin: NSObject, FlutterPlugin {
         switch call.method {
         case "init":
             handleGetInstanceWithConfiguration(call: call, result: result)
+        case "rc.init":
+            handleGetInstanceRemoteConfig(call: call, result: result)
         case "updateConfig":
             handleUpdateConfiguration(call: call, result: result)
         case "track":
@@ -33,6 +36,20 @@ public class MtsAnalyticsPlugin: NSObject, FlutterPlugin {
             handleGetWebSessionQueryItem(call: call, result: result)
         case "setLocation":
             handleSetLocation(call: call, result: result)
+        case "rc.fetchRemoteConfigValues":
+            handleFetchRemoteConfigValues(call: call, result: result)
+        case "rc.activate":
+            handleActivate(call: call, result: result)
+        case "rc.fetchRemoteConfigValuesAndActivate":
+            handleFetchRemoteConfigValuesAndActivate(call: call, result: result)
+        case "rc.setDefaultsMap":
+            handleSetDefaults(call: call, result: result)
+        case "rc.getConfigValue":
+            handleConfigValue(call: call, result: result)
+        case "rc.getDefaultConfigValue":
+            handleDefaultValue(call: call, result: result)
+        case "rc.minFetchInterval":
+            handleMinFetchInterval(call: call, result: result)
         default:
             result(FlutterMethodNotImplemented)
         }
@@ -51,7 +68,7 @@ public class MtsAnalyticsPlugin: NSObject, FlutterPlugin {
             return
         }
 
-        mtsAnalytics = MTAnalytics.getInstance(configuration: configuration)
+        mtsAnalytics = MTMetricsApp.analytics(configuration)
         mtsAnalytics?.logLevel = logLevel ?? MTLogLevel.off
         result(0)
     }
@@ -124,7 +141,7 @@ public class MtsAnalyticsPlugin: NSObject, FlutterPlugin {
             mtsAnalytics.track(event: event)
         default:
             let customEvent = MTCustomEvent(
-                eventType: .custom(name: eventType),
+                eventType: .event,
                 eventName: eventName ?? "",
                 screenName: screenName,
                 parameters: contentObject
@@ -243,13 +260,11 @@ public class MtsAnalyticsPlugin: NSObject, FlutterPlugin {
         result(0)
     }
 
-    private func configureMtsAnalyticsConfig(_ parameters: [String: Any]) -> MTAnalyticsConfiguration? {
+    private func configureMtsAnalyticsConfig(_ parameters: [String: Any]) -> MTMetricsConfiguration? {
         guard let flowId = parameters["iosFlowId"] as? String else { return nil }
-        var configuration = MTAnalyticsConfiguration(flowId: flowId)
 
-        if let flowId = parameters["iosFlowId"] as? String {
-            configuration = MTAnalyticsConfiguration(flowId: flowId)
-        }
+        let configuration = MTMetricsConfiguration(flowId: flowId)
+
         if let activeTimeout = parameters["activeTimeout"] as? Int {
             configuration.activeTimeout = activeTimeout
         }
@@ -269,7 +284,132 @@ public class MtsAnalyticsPlugin: NSObject, FlutterPlugin {
     }
 }
 
-// MARK: ECommerce configuration
+// MARK: - Remote Config
+extension MtsAnalyticsPlugin {
+    private func handleMinFetchInterval(call: FlutterMethodCall, result: @escaping FlutterResult) {
+        guard let arguments = call.arguments as? [String: Any],
+              let minFetchInterval = arguments["interval"] as? Int
+        else {
+            result(FlutterError(code: flutterErrorCode, message: "Wrong args", details: nil))
+            return
+        }
+
+        remoteConfig?.minFetchInterval = TimeInterval(minFetchInterval)
+        result(0)
+    }
+
+    private func handleDefaultValue(call: FlutterMethodCall, result: @escaping FlutterResult) {
+        guard let arguments = call.arguments as? [String: Any],
+              let key = arguments["key"] as? String
+        else {
+            result(FlutterError(code: flutterErrorCode, message: "Wrong args", details: nil))
+            return
+        }
+
+        let value = remoteConfig?.defaultValue(key)
+
+        result(value?.stringValue)
+    }
+
+    private func handleConfigValue(call: FlutterMethodCall, result: @escaping FlutterResult) {
+        guard let arguments = call.arguments as? [String: Any],
+              let key = arguments["key"] as? String
+        else {
+            result(FlutterError(code: flutterErrorCode, message: "Wrong args", details: nil))
+            return
+        }
+
+        let value = remoteConfig?.configValue(key)
+
+        result(value?.stringValue)
+    }
+
+    private func handleFetchRemoteConfigValuesAndActivate(call: FlutterMethodCall, result: @escaping FlutterResult) {
+        Task {
+            let status = try await remoteConfig?.fetchRemoteConfigValuesAndActivate()
+            switch status {
+            case .success:
+                let success: [String: Any] = [
+                    "type": "success",
+                ]
+                result(success)
+            case .failure:
+                let failure: [String: Any] = [
+                    "type": "failure",
+                ]
+                result(failure)
+            case .throttled:
+                let throttled: [String: Any] = [
+                    "type": "throttled",
+                ]
+                result(throttled)
+            @unknown default:
+                result(FlutterMethodNotImplemented)
+            }
+        }
+    }
+
+    private func handleActivate(call: FlutterMethodCall, result: @escaping FlutterResult) {
+        remoteConfig?.activate()
+    }
+
+    private func handleFetchRemoteConfigValues(call: FlutterMethodCall, result: @escaping FlutterResult) {
+        Task {
+            let status = await remoteConfig?.fetchRemoteConfigValues()
+            switch status {
+            case .success:
+                let success: [String: Any] = [
+                    "type": "success",
+                ]
+                result(success)
+            case .failure:
+                let failure: [String: Any] = [
+                    "type": "failure",
+                ]
+                result(failure)
+            case .throttled:
+                let throttled: [String: Any] = [
+                    "type": "throttled",
+                ]
+                result(throttled)
+            @unknown default:
+                result(FlutterMethodNotImplemented)
+            }
+        }
+    }
+
+    private func handleSetDefaults(call: FlutterMethodCall, result: @escaping FlutterResult) {
+        guard let arguments = call.arguments as? [String: Any],
+              let params = arguments["parameters"] as? [String: Any]
+        else {
+            result(FlutterError(code: flutterErrorCode, message: "Wrong args", details: nil))
+            return
+        }
+
+        remoteConfig?.setDefaults(dict: params)
+        result(0)
+    }
+
+    private func handleGetInstanceRemoteConfig(call: FlutterMethodCall, result: @escaping FlutterResult) {
+        guard let arguments = call.arguments as? [String: Any],
+              let params = arguments["parameters"] as? [String: Any]
+        else {
+            result(FlutterError(code: flutterErrorCode, message: "Wrong args", details: nil))
+            return
+        }
+
+        guard let configuration = configureMtsAnalyticsConfig(params) else {
+            result(FlutterError(code: flutterErrorCode, message: "Missing analytics configuration", details: nil))
+            return
+        }
+
+        remoteConfig = MTMetricsApp.remoteConfig(configuration)
+        mtsAnalytics?.logLevel = logLevel ?? MTLogLevel.off
+        result(0)
+    }
+}
+
+// MARK: - ECommerce configuration
 
 private extension MtsAnalyticsPlugin {
     private func convertECommerceGA4Event(_ parameters: [String: Any?], _ eventName: String) -> MTECommerceGA4Event {
@@ -289,8 +429,8 @@ private extension MtsAnalyticsPlugin {
         let creativeSlot = eventParams?["creativeSlot"] as? String
         let promotionId = eventParams?["promotionId"] as? String
         let promotionName = eventParams?["promotionName"] as? String
-        var ecomData = eventParams?["customData"] as? [String: Any?]
-        let pluginVersion = ecomData?.removeValue(forKey: "ma_flutter_plg_version") as? String
+        let ecomData = eventParams?["ecommerceData"] as? [String: Any?]
+        let customData = eventParams?["customData"] as? [String: Any?]
 
         let items = (eventParams?.removeValue(forKey: "items") as? [[String: Any]])?.compactMap { itemData in
             let itemId = itemData["itemId"] as? String
@@ -368,35 +508,35 @@ private extension MtsAnalyticsPlugin {
             creativeSlot: creativeSlot,
             promotionId: promotionId,
             promotionName: promotionName,
-            customParameters: ["ma_flutter_plg_version": pluginVersion]
+            customParameters: customData
         )
     }
 
     private func convertECommerceUAEvent(_ parameters: [String: Any?], _ eventName: String) -> MTEcommerceUAEvent {
         let eventParams = parameters["eventData"] as? [String: Any]
-        let ecommerceData = eventParams?["ecommerce"] as? [String: Any]
-        var ecomParams = eventParams?["customData"] as? [String: Any?]
-        let pluginVersion = ecomParams?.removeValue(forKey: "ma_flutter_plg_version") as? String
+        let ecommerce = eventParams?["ecommerce"] as? [String: Any]
+        let ecomData = eventParams?["ecommerceData"] as? [String: Any?]
+        let customData = eventParams?["customData"] as? [String: Any?]
 
-        let ecommerce = MTECommerceUA(
-            purchase: convertPurchase(ecommerceData?["purchase"] as? [String: Any]),
-            checkoutOption: convertCheckoutOption(ecommerceData?["purchase"] as? [String: Any]),
-            add: convertAdd(ecommerceData?["add"] as? [String: Any]),
-            checkout: convertCheckout(ecommerceData?["checkout"] as? [String: Any]),
-            refund: convertRefund(ecommerceData?["refund"] as? [String: Any]),
-            remove: convertRemove(ecommerceData?["remove"] as? [String: Any]),
-            click: convertClick(ecommerceData?["click"] as? [String: Any]),
-            promoClick: convertPromoСlick(ecommerceData?["promoClick"] as? [String: Any]),
-            detail: convertDetail(ecommerceData?["detail"] as? [String: Any]),
-            impressions: convertImpressions(ecommerceData?["impressions"] as? [String: Any]),
-            promoView: convertPromoView(ecommerceData?["promoView"] as? [String: Any])
+        let ecommerceUA = MTECommerceUA(
+            purchase: convertPurchase(ecommerce?["purchase"] as? [String: Any]),
+            checkoutOption: convertCheckoutOption(ecommerce?["purchase"] as? [String: Any]),
+            add: convertAdd(ecommerce?["add"] as? [String: Any]),
+            checkout: convertCheckout(ecommerce?["checkout"] as? [String: Any]),
+            refund: convertRefund(ecommerce?["refund"] as? [String: Any]),
+            remove: convertRemove(ecommerce?["remove"] as? [String: Any]),
+            click: convertClick(ecommerce?["click"] as? [String: Any]),
+            promoClick: convertPromoСlick(ecommerce?["promoClick"] as? [String: Any]),
+            detail: convertDetail(ecommerce?["detail"] as? [String: Any]),
+            impressions: convertImpressions(ecommerce?["impressions"] as? [String: Any]),
+            promoView: convertPromoView(ecommerce?["promoView"] as? [String: Any])
         )
         return MTEcommerceUAEvent(
             eventName: MTEcommerceUAEventName(rawValue: eventName) ?? .add,
-            ecommerceParameters: ecommerceData,
-            ecommerce: ecommerce,
+            ecommerceParameters: ecomData,
+            ecommerce: ecommerceUA,
             currencyCode: eventParams?["currencyCode"] as? String,
-            customParameters: ["ma_flutter_plg_version": pluginVersion]
+            customParameters: customData
         )
     }
 

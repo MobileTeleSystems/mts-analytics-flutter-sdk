@@ -428,6 +428,7 @@ class ECommerceUAEvent extends Event {
 class ECommerceGA4Event extends Event {
   final ECommerceGA4EventName eventName;
   final Map<String, Object?> customDimensions;
+  final Map<String, Object?> ecommerceParameters;
   final String? transactionId;
   final String? affiliation;
   final String? value;
@@ -448,6 +449,7 @@ class ECommerceGA4Event extends Event {
   ECommerceGA4Event({
     required this.eventName,
     this.customDimensions = const {},
+    this.ecommerceParameters = const {},
     this.transactionId,
     this.affiliation,
     this.value,

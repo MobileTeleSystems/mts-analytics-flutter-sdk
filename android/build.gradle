@@ -2,7 +2,7 @@ group 'ru.mts.analytics.plugin'
 version '1.0-SNAPSHOT'
 
 buildscript {
-    ext.kotlin_version = '1.7.10'
+    ext.kotlin_version = '1.8.10'
     repositories {
         google()
         mavenCentral()
@@ -41,7 +41,7 @@ android {
         namespace 'ru.mts.analytics.plugin'
     }
 
-    compileSdkVersion 34
+    compileSdk 34
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
@@ -88,7 +88,7 @@ android {
 
     dependencies {
         //MTS analytics
-        implementation "ru.mts.analytics:android-sdk-allserv:1.12.0"
+        implementation "ru.mts.analytics:android-sdk-allserv:1.15.0"
     }
 
     testOptions {

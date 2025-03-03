@@ -7,14 +7,14 @@ part of 'deeplink_result.dart';
 // **************************************************************************
 
 DeepLinkResultSuccess _$DeepLinkResultSuccessFromJson(
-        Map<String, dynamic> json,) =>
+        Map<String, dynamic> json) =>
     DeepLinkResultSuccess(
       params: json['params'] as Map<String, dynamic>,
       location: json['location'] as String,
     );
 
 Map<String, dynamic> _$DeepLinkResultSuccessToJson(
-        DeepLinkResultSuccess instance,) =>
+        DeepLinkResultSuccess instance) =>
     <String, dynamic>{
       'location': instance.location,
       'params': instance.params,
@@ -26,7 +26,7 @@ DeepLinkResultError _$DeepLinkResultErrorFromJson(Map<String, dynamic> json) =>
     );
 
 Map<String, dynamic> _$DeepLinkResultErrorToJson(
-        DeepLinkResultError instance,) =>
+        DeepLinkResultError instance) =>
     <String, dynamic>{
       'error': DeepLinkResultError._exceptionToString(instance.error),
     };

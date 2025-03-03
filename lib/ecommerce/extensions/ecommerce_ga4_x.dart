@@ -31,6 +31,7 @@ extension ECommerceGA4EventExtension on ECommerceGA4Event {
     customData.addAll(customDimensions);
     customData['ma_flutter_plg_version'] = pluginVersion;
     eventData['customData'] = customData;
+    eventData['ecommerceData'] = ecommerceParameters;
 
     data['eventData'] = eventData;
 

@@ -10,7 +10,7 @@
   mts_analytics_plugin:
     git:
       url: git@github.com:MobileTeleSystems/mts-analytics-flutter-sdk.git
-      ref: 1.8.0
+      ref: 2.1.0
 ```
 
 Пример подключения: <https://github.com/MobileTeleSystems/mts-analytics-flutter-sdk/tree/master/example>

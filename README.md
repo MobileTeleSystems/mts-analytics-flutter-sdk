@@ -436,4 +436,3 @@ final event = ECommerceGA4Event(
   );
 mtsAnalyticsPlugin.trackEvent(event);
 ```
-

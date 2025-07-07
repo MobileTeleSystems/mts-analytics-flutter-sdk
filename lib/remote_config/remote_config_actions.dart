@@ -5,7 +5,8 @@ enum RemoteConfigMethod {
   fetchRemoteConfigValuesAndActivate('rc.fetchRemoteConfigValuesAndActivate'),
   getConfigValue('rc.getConfigValue'),
   getDefaultConfigValue('rc.getDefaultConfigValue'),
-  minFetchInterval('rc.minFetchInterval');
+  minFetchInterval('rc.minFetchInterval'),
+  activeConfigValues('rc.activeConfigValues');
 
   const RemoteConfigMethod(this.value);
   final String value;

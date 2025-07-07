@@ -4,7 +4,7 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'mts_analytics_plugin'
-  s.version          = '1.9.0'
+  s.version          = '2.1.0'
   s.summary          = 'MTSAnalytics plugin for Flutter projects'
   s.homepage         = "https://a.mts.ru/"
   s.license          = { :type => "proprietary" }
@@ -19,6 +19,6 @@ Pod::Spec.new do |s|
   s.swift_version = '5.0'
 
   s.static_framework = true
-  s.dependency 'MTMetrics', '4.1.0'
+  s.dependency 'MTAnalytics', '5.1.4'
 
 end

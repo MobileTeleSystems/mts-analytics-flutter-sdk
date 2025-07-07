@@ -132,6 +132,21 @@ internal class RemoteConfigMapper(
         }
     }
 
+    fun getActiveConfigValues(result: MethodChannel.Result) {
+        coroutineScope.launch(
+            CoroutineExceptionHandler { _, throwable ->
+                exceptionHandler(result, throwable)
+            }
+        ) {
+            val values = mtsAnalytics
+                .remoteConfig
+                .activeConfig
+                .value
+                ?.data
+            result.success(values)
+        }
+    }
+
     private fun MARemoteConfigResult.toMap() = when (this) {
         is MARemoteConfigResult.Success -> {
             mapOf(

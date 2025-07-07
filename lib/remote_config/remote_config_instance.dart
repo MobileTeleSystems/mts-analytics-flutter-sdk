@@ -12,6 +12,13 @@ class RemoteConfig {
     return _methodChannel.invokeMethod('rc.init', config.toJson());
   }
 
+  Future<Map<String, String?>?> activeConfigValues() async {
+    final result = await _methodChannel.invokeMapMethod<String, String?>(
+      RemoteConfigMethod.activeConfigValues.value,
+    );
+    return result;
+  }
+
   Future<void> setDefaultsMap(Map<String, String> map) {
     return _methodChannel
         .invokeMethod(RemoteConfigMethod.setDefaultsMap.value, {

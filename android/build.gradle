@@ -88,7 +88,7 @@ android {
 
     dependencies {
         //MTS analytics
-        implementation "ru.mts.analytics:android-sdk-allserv:1.15.0"
+        implementation "ru.mts.analytics:android-sdk-allserv:1.19.0"
     }
 
     testOptions {

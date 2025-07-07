@@ -1,13 +1,14 @@
 import Flutter
 import Foundation
-import MTMetrics
+import MTAnalytics
 import CoreLocation
 
 public class MtsAnalyticsPlugin: NSObject, FlutterPlugin {
     
     private let flutterErrorCode = "MTSACallsHandlerError"
-    private var mtsAnalytics: MTAnalytics?
+    private var mtsAnalytics: MTAnalyticsTracker?
     private var remoteConfig: MTRemoteConfig?
+    private var linkResolver: MTLinkResolver?
     private var logLevel: MTLogLevel?
 
     public static func register(with registrar: FlutterPluginRegistrar) {
@@ -50,6 +51,8 @@ public class MtsAnalyticsPlugin: NSObject, FlutterPlugin {
             handleDefaultValue(call: call, result: result)
         case "rc.minFetchInterval":
             handleMinFetchInterval(call: call, result: result)
+        case "rc.activeConfigValues":
+            handleAllValues(call: call, result: result)
         default:
             result(FlutterMethodNotImplemented)
         }
@@ -68,7 +71,9 @@ public class MtsAnalyticsPlugin: NSObject, FlutterPlugin {
             return
         }
 
-        mtsAnalytics = MTMetricsApp.analytics(configuration)
+        MTAnalyticsApp.configure(configuration)
+        mtsAnalytics = MTAnalyticsApp.analytics
+        linkResolver = MTAnalyticsApp.linkResolver
         mtsAnalytics?.logLevel = logLevel ?? MTLogLevel.off
         result(0)
     }
@@ -173,8 +178,8 @@ public class MtsAnalyticsPlugin: NSObject, FlutterPlugin {
     }
 
     private func handleResolveLink(call: FlutterMethodCall, result: @escaping FlutterResult) {
-        guard let mtsAnalytics = mtsAnalytics else {
-            result(FlutterError(code: flutterErrorCode, message: "Tracker has not been initialised", details: nil))
+        guard let linkResolver else {
+            result(FlutterError(code: flutterErrorCode, message: "MTLinkResolver has not been initialised", details: nil))
             return
         }
 
@@ -186,13 +191,13 @@ public class MtsAnalyticsPlugin: NSObject, FlutterPlugin {
             return
         }
 
-        mtsAnalytics.resolveLink(url: url) { resolveResult in
+        linkResolver.resolveLink(url: url) { resolveResult in
             switch resolveResult {
             case .success(let link):
                 let success: [String: Any] = [
                     "type": "success",
                     "location": link.location,
-                    "params": link.params
+                    "params": link.parameters
                 ]
                 result(success)
             case .failure(let error):
@@ -260,10 +265,10 @@ public class MtsAnalyticsPlugin: NSObject, FlutterPlugin {
         result(0)
     }
 
-    private func configureMtsAnalyticsConfig(_ parameters: [String: Any]) -> MTMetricsConfiguration? {
+    private func configureMtsAnalyticsConfig(_ parameters: [String: Any]) -> MTAnalyticsConfiguration? {
         guard let flowId = parameters["iosFlowId"] as? String else { return nil }
 
-        let configuration = MTMetricsConfiguration(flowId: flowId)
+        let configuration = MTAnalyticsConfiguration(flowId: flowId)
 
         if let activeTimeout = parameters["activeTimeout"] as? Int {
             configuration.activeTimeout = activeTimeout
@@ -322,6 +327,12 @@ extension MtsAnalyticsPlugin {
         let value = remoteConfig?.configValue(key)
 
         result(value?.stringValue)
+    }
+    
+    private func handleAllValues(call: FlutterMethodCall, result: @escaping FlutterResult) {
+        guard let allValues = remoteConfig?.allValues else { return result(nil) }
+        let stringValues = allValues.mapValues { $0.stringValue }
+        result(stringValues)
     }
 
     private func handleFetchRemoteConfigValuesAndActivate(call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -403,7 +414,7 @@ extension MtsAnalyticsPlugin {
             return
         }
 
-        remoteConfig = MTMetricsApp.remoteConfig(configuration)
+        remoteConfig = MTAnalyticsApp.remoteConfig(configuration)
         mtsAnalytics?.logLevel = logLevel ?? MTLogLevel.off
         result(0)
     }

@@ -154,6 +154,29 @@ final result = mtsAnalyticsPlugin.remoteConfig.configValue('date');
 
 [В начало](#mts-analytics-sdk)
 
+#### Получение всех значений активной конфигурации
+
+После успешной активации все полученные значения будут доступны через метод `activeConfigValues()`.
+
+```dart
+MtsAnalyticsConfig config = MtsAnalyticsConfig()
+      ..logLevel = LogLevel.DEBUG
+      ..crashReportingEnabled = true
+      ..backgroundTimeout = 120
+      ..activeTimeout = 90
+      ..eventStorageLimit = 3000
+      ..networkTrafficEnabled = false
+      ..androidFlowId = ""
+      ..iosFlowId = "";
+final mtsAnalyticsPlugin = MtsAnalyticsPlugin();
+mtsAnalyticsPlugin.init(config);
+mtsAnalyticsPlugin.remoteConfig.init(config);
+mtsAnalyticsPlugin.remoteConfig.fetchRemoteConfigValuesAndActivate();
+final result = mtsAnalyticsPlugin.remoteConfig.activeConfigValues();
+```
+
+[В начало](#mts-analytics-sdk)
+
 ### Получение значений по умолчанию
 
 Если вам нужно получить значение по умолчанию, используйте поле `defaultValue(String key)`:

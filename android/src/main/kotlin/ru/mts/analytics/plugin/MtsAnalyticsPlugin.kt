@@ -68,6 +68,7 @@ class MtsAnalyticsPlugin : FlutterPlugin, MethodCallHandler {
 
             "rc.activate" -> remoteConfigMapper.activate(result)
             "rc.minFetchInterval" -> remoteConfigMapper.minFetchInterval(call, result)
+            "rc.activeConfigValues" -> remoteConfigMapper.getActiveConfigValues(result)
             else -> {
                 result.notImplemented()
             }

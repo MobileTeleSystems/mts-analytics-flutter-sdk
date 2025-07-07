@@ -23,12 +23,12 @@ fun Int?.toLogLevel(): LogLevel2 {
 fun Map<String, Any?>.toMtsAnalyticsConfig(): MtsAnalyticsConfig2 {
     val logLevel = this["logLevel"] as? Int?
     return MtsAnalyticsConfig2.Builder(flowId = get("androidFlowId") as? String ?: "")
-        .setLogLevel(logLevel?.let { it.toLogLevel() } ?: LogLevel2.OFF)
-        .setCrashReportingEnabled(get("crashReportingEnabled") as? Boolean ?: false)
+        .setLogLevel(logLevel?.toLogLevel() ?: LogLevel2.OFF)
+        .setCrashReportingEnabled(get("crashReportingEnabled") as? Boolean == true)
         .setBackgroundTimeout(get("backgroundTimeout") as? Int ?: 1800)
         .setActiveTimeout(get("activeTimeout") as? Int ?: 1800)
         .setEventStorageLimit(get("eventStorageLimit") as? Int ?: 20000)
-        .setNetworkTrafficEnabled(get("networkTrafficEnabled") as? Boolean ?: true)
+        .setNetworkTrafficEnabled(get("networkTrafficEnabled") as? Boolean != false)
         .build()
 }
 
